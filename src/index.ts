@@ -41,3 +41,13 @@ process.on("uncaughtException", (error) => {
 
 // Run the application
 bootstrap();
+
+// Iniciar servidor HTTP básico para Render (Web Service Free Tier)
+const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.write('Yui Agent is running!');
+    res.end();
+}).listen(PORT, () => {
+    console.log(`[Servidor] Escuchando en el puerto ${PORT} (Requerido por Render)`);
+});
