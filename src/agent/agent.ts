@@ -1,7 +1,7 @@
 import { systemPrompt } from "./prompts.js";
 import { callLLM, LLMMessage } from "../llm/client.js";
 import { executeTool } from "../tools/registry.js";
-import { getHistory, saveMessage } from "../memory/firebase.js";
+import { getHistory, saveMessage, getUserProfile } from "../memory/firebase.js";
 
 const MAX_ITERATIONS = 5;
 
@@ -12,9 +12,19 @@ export async function processUserMessage(userId: string, content: string): Promi
     // 2. Retrieve conversation history (limit to last 20 to keep context window manageable)
     const history = await getHistory(userId, 20);
 
-    // 3. Construct messages array for the LLM
+    // 3. Obtener el perfil de la memoria a largo plazo del usuario
+    const userProfile = await getUserProfile(userId);
+    let memoryText = "";
+    if (Object.keys(userProfile).length > 0) {
+        memoryText = `\n\n[MEMORIA A LARGO PLAZO DE ESTE USUARIO]\nRecuerda estos datos:\n`;
+        for (const [key, value] of Object.entries(userProfile)) {
+            memoryText += `- ${key}: ${value}\n`;
+        }
+    }
+
+    // 4. Construct messages array for the LLM
     const messages: LLMMessage[] = [
-        { role: "system", content: systemPrompt }
+        { role: "system", content: systemPrompt + memoryText }
     ];
 
     for (const msg of history) {
@@ -44,7 +54,7 @@ export async function processUserMessage(userId: string, content: string): Promi
                 const functionArgs = JSON.parse(toolCall.function.arguments || "{}");
                 
                 // Execute the tool
-                const toolResult = await executeTool(functionName, functionArgs);
+                const toolResult = await executeTool(functionName, functionArgs, { userId });
                 
                 // Append the tool result back to the messages
                 messages.push({

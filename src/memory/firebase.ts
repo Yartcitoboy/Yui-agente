@@ -91,3 +91,25 @@ export async function clearHistory(userId: string): Promise<void> {
         await batch.commit();
     }
 }
+
+/**
+ * Saves a fact or preference about the user into their long-term memory
+ */
+export async function saveUserProfile(userId: string, key: string, value: string): Promise<void> {
+    const profileRef = db.collection("users").doc(userId).collection("profile").doc("memory");
+    await profileRef.set({
+        [key]: value
+    }, { merge: true });
+}
+
+/**
+ * Retrieves the user's long term memory profile
+ */
+export async function getUserProfile(userId: string): Promise<Record<string, string>> {
+    const profileRef = db.collection("users").doc(userId).collection("profile").doc("memory");
+    const doc = await profileRef.get();
+    if (!doc.exists) {
+        return {};
+    }
+    return doc.data() as Record<string, string>;
+}
