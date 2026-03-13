@@ -47,10 +47,12 @@ async function bootstrap() {
              for (const file of tokenFiles) {
                   try {
                       const tokenPath = `${secretsDir}/${file}`;
-                      _execSync(`${gogCmd} auth tokens import ${tokenPath}`, { stdio: "ignore" });
+                      _execSync(`${gogCmd} auth tokens import ${tokenPath}`, { stdio: "pipe" });
                       console.log(`✅ Token de sesión importado: ${file}`);
-                  } catch (err) {
-                      console.log(`⚠️ Error importando token ${file}`);
+                  } catch (err: any) {
+                      console.log(`⚠️ Error importando token ${file}: ${err.message}`);
+                      if (err.stdout) console.log(`   Stdout: ${err.stdout.toString()}`);
+                      if (err.stderr) console.log(`   Stderr: ${err.stderr.toString()}`);
                   }
              }
              
