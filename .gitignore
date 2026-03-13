@@ -3,3 +3,6 @@ node_modules
 /dist
 service-account.json
 client_secret.json
+token_nuevo.json
+token_nuevo_duoc.json
+token.json
