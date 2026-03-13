@@ -29,19 +29,38 @@ async function bootstrap() {
     try {
         const _fs = await import("fs");
         const _execSync = await import("child_process").then(m => m.execSync);
-        const tokenPath = "/etc/secrets/token.json";
-        if (_fs.existsSync(tokenPath)) {
-            const tokenData = JSON.parse(_fs.readFileSync(tokenPath, "utf-8"));
-            if (tokenData && tokenData.email) {
-                 process.env.GOG_ACCOUNT = tokenData.email;
-            }
-            const isWindows = process.platform === 'win32';
-            const gogCmd = isWindows ? ".\\bin\\gog.exe" : "./bin/gog";
-            _execSync(`${gogCmd} auth tokens import ${tokenPath}`, { stdio: "ignore" });
-            console.log("✅ GOG CLI Token de sesión importado exitosamente desde Secret Files.");
+        const isWindows = process.platform === 'win32';
+        const gogCmd = isWindows ? ".\\bin\\gog.exe" : "./bin/gog";
+
+        // Primero, configurar credenciales base obligatoriamente en Render
+        const secretPath = "/etc/secrets/client_secret.json";
+        if (_fs.existsSync(secretPath)) {
+            _execSync(`${gogCmd} auth credentials ${secretPath}`, { stdio: "ignore" });
+            console.log("✅ Credenciales de OAuth configuradas para gogcli.");
+        }
+
+        // Luego importar TODOS los tokens que encuentre (múltiples cuentas)
+        const secretsDir = "/etc/secrets";
+        if (_fs.existsSync(secretsDir)) {
+             const files = _fs.readdirSync(secretsDir);
+             const tokenFiles = files.filter(f => f.startsWith("token") && f.endsWith(".json"));
+             for (const file of tokenFiles) {
+                  const tokenPath = `${secretsDir}/${file}`;
+                  _execSync(`${gogCmd} auth tokens import ${tokenPath}`, { stdio: "ignore" });
+                  console.log(`✅ Token de sesión importado: ${file}`);
+             }
+             
+             // Asignamos una cuenta por defecto a GROQ si hay al menos un token
+             if (tokenFiles.length > 0) {
+                 const firstTokenData = JSON.parse(_fs.readFileSync(`${secretsDir}/${tokenFiles[0]}`, "utf-8"));
+                 if (firstTokenData && firstTokenData.email) {
+                     process.env.GOG_ACCOUNT = firstTokenData.email;
+                     console.log(`[GOG] Cuenta por defecto asignada: ${process.env.GOG_ACCOUNT}`);
+                 }
+             }
         }
     } catch (e) {
-        console.log("⚠️ No se pudo importar el token de GOG CLI:", e);
+        console.log("⚠️ No se pudo inicializar la configuración de GOG CLI:", e);
     }
 
     try {
