@@ -5,7 +5,8 @@ import * as fs from "fs";
 import * as os from "os";
 
 const execFileAsync = promisify(execFile);
-const gogBinary = path.resolve(process.cwd(), "bin", "gog.exe");
+const isWindows = os.platform() === 'win32';
+const gogBinary = path.resolve(process.cwd(), "bin", isWindows ? "gog.exe" : "gog");
 
 export const executeGogCommandDef = {
     type: "function",
@@ -29,7 +30,7 @@ export const executeGogCommandDef = {
 export async function executeGogCommand(args: string[]): Promise<string> {
     try {
         if (!fs.existsSync(gogBinary)) {
-            return "Error: el binario gog no se encuentra en bin/gog.exe.";
+            return `Error: el binario gog no se encuentra en ${gogBinary}.`;
         }
         
         // Execute the command directly avoiding shell injection
