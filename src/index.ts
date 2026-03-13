@@ -25,6 +25,25 @@ async function bootstrap() {
     console.log("[Config] ElevenLabs API Key:", envInfo.ELEVENLABS_API_KEY ? `✅ Configurado (${envInfo.ELEVENLABS_API_KEY.substring(0, 4)}...${envInfo.ELEVENLABS_API_KEY.slice(-4)})` : "❌ Falta");
     console.log(`[Config] Usuarios autorizados: ${envInfo.TELEGRAM_ALLOWED_USER_IDS.length}`);
 
+    // Import GOG CLI token if running in Render and file exists
+    try {
+        const _fs = await import("fs");
+        const _execSync = await import("child_process").then(m => m.execSync);
+        const tokenPath = "/etc/secrets/token.json";
+        if (_fs.existsSync(tokenPath)) {
+            const tokenData = JSON.parse(_fs.readFileSync(tokenPath, "utf-8"));
+            if (tokenData && tokenData.email) {
+                 process.env.GOG_ACCOUNT = tokenData.email;
+            }
+            const isWindows = process.platform === 'win32';
+            const gogCmd = isWindows ? ".\\bin\\gog.exe" : "./bin/gog";
+            _execSync(`${gogCmd} auth tokens import ${tokenPath}`, { stdio: "ignore" });
+            console.log("✅ GOG CLI Token de sesión importado exitosamente desde Secret Files.");
+        }
+    } catch (e) {
+        console.log("⚠️ No se pudo importar el token de GOG CLI:", e);
+    }
+
     try {
         console.log("[Bot] Iniciando conexión con Telegram (Long Polling)...");
         // Start the bot (this promise will hang while the bot is running)
