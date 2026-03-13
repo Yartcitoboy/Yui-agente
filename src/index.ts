@@ -42,6 +42,9 @@ async function bootstrap() {
         // Luego importar TODOS los tokens que encuentre (múltiples cuentas)
         const secretsDir = "/etc/secrets";
         if (_fs.existsSync(secretsDir)) {
+             // Configurar una contraseña genérica para el llavero en Linux para evitar el prompt TTY
+             process.env.GOG_KEYRING_PASSWORD = "render_keyring_pass_1234!";
+
              const files = _fs.readdirSync(secretsDir);
              const tokenFiles = files.filter(f => f.startsWith("token") && f.endsWith(".json"));
              for (const file of tokenFiles) {
