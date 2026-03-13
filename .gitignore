@@ -1,4 +1,5 @@
 .env
 node_modules
+/dist
 service-account.json
 client_secret.json

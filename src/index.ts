@@ -1,5 +1,6 @@
 import { bot } from "./bot/bot.js";
 import { envInfo } from "./config.js";
+import * as http from "http";
 
 // Main entry point
 async function bootstrap() {
