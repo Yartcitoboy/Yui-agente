@@ -45,18 +45,27 @@ async function bootstrap() {
              const files = _fs.readdirSync(secretsDir);
              const tokenFiles = files.filter(f => f.startsWith("token") && f.endsWith(".json"));
              for (const file of tokenFiles) {
-                  const tokenPath = `${secretsDir}/${file}`;
-                  _execSync(`${gogCmd} auth tokens import ${tokenPath}`, { stdio: "ignore" });
-                  console.log(`✅ Token de sesión importado: ${file}`);
+                  try {
+                      const tokenPath = `${secretsDir}/${file}`;
+                      _execSync(`${gogCmd} auth tokens import ${tokenPath}`, { stdio: "ignore" });
+                      console.log(`✅ Token de sesión importado: ${file}`);
+                  } catch (err) {
+                      console.log(`⚠️ Error importando token ${file}`);
+                  }
              }
              
              // Asignamos una cuenta por defecto a GROQ si hay al menos un token
-             if (tokenFiles.length > 0) {
-                 const firstTokenData = JSON.parse(_fs.readFileSync(`${secretsDir}/${tokenFiles[0]}`, "utf-8"));
-                 if (firstTokenData && firstTokenData.email) {
-                     process.env.GOG_ACCOUNT = firstTokenData.email;
-                     console.log(`[GOG] Cuenta por defecto asignada: ${process.env.GOG_ACCOUNT}`);
-                 }
+             for (const file of tokenFiles) {
+                  try {
+                      const tokenData = JSON.parse(_fs.readFileSync(`${secretsDir}/${file}`, "utf-8"));
+                      if (tokenData && tokenData.email && !process.env.GOG_ACCOUNT) {
+                          process.env.GOG_ACCOUNT = tokenData.email;
+                          console.log(`[GOG] Cuenta por defecto asignada: ${process.env.GOG_ACCOUNT}`);
+                          break;
+                      }
+                  } catch (e) {
+                      // Ignorar tokens malformados para la cuenta por defecto
+                  }
              }
         }
     } catch (e) {
