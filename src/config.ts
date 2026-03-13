@@ -1,7 +1,18 @@
 import { config } from "dotenv";
+import * as fs from "fs";
 
 // Load environment variables from .env file
 config();
+
+// Auto-detect Render Secret Files
+if (fs.existsSync("/etc/secrets/service-account.json")) {
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = "/etc/secrets/service-account.json";
+}
+if (fs.existsSync("/etc/secrets/client_secret.json")) {
+    process.env.GOG_CLIENT_SECRET = "/etc/secrets/client_secret.json";
+} else {
+    process.env.GOG_CLIENT_SECRET = "client_secret.json";
+}
 
 function getEnvVar(key: string, required: boolean = true): string {
     const value = process.env[key];

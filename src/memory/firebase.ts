@@ -8,10 +8,27 @@ interface MessageRow {
     timestamp: number;
 }
 
+import * as fs from "fs";
+
+// Try multiple paths to find where Render hid the file
+let serviceAccountPath = "";
+if (fs.existsSync("./service-account.json")) serviceAccountPath = "./service-account.json";
+else if (fs.existsSync("/etc/secrets/service-account.json")) serviceAccountPath = "/etc/secrets/service-account.json";
+else if (process.env.GOOGLE_APPLICATION_CREDENTIALS && fs.existsSync(process.env.GOOGLE_APPLICATION_CREDENTIALS)) serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+let credential;
+if (serviceAccountPath) {
+    const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, "utf-8"));
+    credential = admin.credential.cert(serviceAccount);
+} else {
+    // Fallback to application default and hope it works
+    credential = admin.credential.applicationDefault();
+}
+
 // Ensure GOOGLE_APPLICATION_CREDENTIALS points to the service account JSON
 // Admin SDK automatically uses this environment variable for initialization
 admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
+    credential: credential,
     projectId: "yui-agent" // Match the project ID from the service account
 });
 
