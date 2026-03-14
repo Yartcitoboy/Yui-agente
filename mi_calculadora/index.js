@@ -1,1 +1,0 @@
-const argv = process.argv.slice(2); const suma = argv[0].split('+'); const num1 = parseInt(suma[0]); const num2 = parseInt(suma[1]); console.log(`Resultado: ${num1 + num2}`);
